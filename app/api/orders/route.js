@@ -1,33 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServer, requireUser } from '../../../lib/supabase/server';
-
-export const runtime = 'nodejs';
-
-export async function GET(request) {
-  try {
-    const user = await requireUser(request);
-    const supabase = getSupabaseServer();
-    const { data, error } = await supabase.from('procurement_orders').select('*, procurement_items(*)').eq('user_id', user.id).order('created_at', { ascending: false });
-    if (error) throw error;
-    return NextResponse.json({ orders: data || [] });
-  } catch (error) {
-    return NextResponse.json({ error: error.message === 'Unauthorized' ? 'Unauthorized.' : 'Unable to load orders.' }, { status: error.message === 'Unauthorized' ? 401 : 500 });
-  }
-}
-
-export async function POST(request) {
-  try {
-    const user = await requireUser(request);
-    const { items = [] } = await request.json();
-    if (!Array.isArray(items) || !items.length) return NextResponse.json({ error: 'At least one procurement item is required.' }, { status: 400 });
-    const total = items.reduce((sum, item) => sum + Number(item.unit_price || item.price || 0) * Math.max(1, Number(item.quantity || 1)), 0);
-    const supabase = getSupabaseServer();
-    const { data: order, error: orderError } = await supabase.from('procurement_orders').insert({ user_id: user.id, total, status: 'Pending' }).select().single();
-    if (orderError) throw orderError;
-    const rows = items.filter(item => item.menu_item_id).map(item => ({ order_id: order.id, menu_item_id: item.menu_item_id, quantity: Math.max(1, Number(item.quantity || 1)), unit_price: Number(item.unit_price || item.price || 0) }));
-    if (rows.length) { const { error } = await supabase.from('procurement_items').insert(rows); if (error) throw error; }
-    return NextResponse.json({ order }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: error.message === 'Unauthorized' ? 'Unauthorized.' : 'Unable to create procurement order.' }, { status: error.message === 'Unauthorized' ? 401 : 500 });
-  }
-}
+export const runtime='nodejs';
+export async function GET(request){try{const user=await requireUser(request),db=getSupabaseServer();const {data,error}=await db.from('procurement_orders').select('*,procurement_items(*,menu_items(id,name,price,menus(id,name,vendor_id,vendors(id,name))))').eq('user_id',user.id).order('created_at',{ascending:false});if(error)throw error;return NextResponse.json({orders:data||[]})}catch(e){return NextResponse.json({error:e.message==='Unauthorized'?'Unauthorized.':'Unable to load orders.'},{status:e.message==='Unauthorized'?401:500})}}
+export async function POST(request){try{const user=await requireUser(request),{items=[],notes}=await request.json();if(!Array.isArray(items)||!items.length)return NextResponse.json({error:'At least one procurement item is required.'},{status:400});const ids=items.map(x=>x.menu_item_id).filter(Boolean);if(ids.length!==items.length)return NextResponse.json({error:'Every procurement item must reference a persisted menu item.'},{status:400});const db=getSupabaseServer();const {data:menuItems,error:miError}=await db.from('menu_items').select('id,price,menu_id,menus!inner(id,status,vendor_id)').in('id',ids);if(miError)throw miError;if(!menuItems||menuItems.length!==ids.length)throw new Error('One or more menu items could not be found.');const vendors=[...new Set(menuItems.map(x=>x.menus.vendor_id))];if(vendors.length!==1)return NextResponse.json({error:'A procurement request must contain items from one vendor.'},{status:400});if(menuItems.some(x=>x.menus.status!=='Published'))return NextResponse.json({error:'One or more selected menu items are not currently published.'},{status:409});const byId=new Map(menuItems.map(x=>[x.id,x]));const rows=items.map(x=>({menu_item_id:x.menu_item_id,quantity:Math.max(1,Number(x.quantity||1)),unit_price:Number(byId.get(x.menu_item_id).price||0)}));const total=rows.reduce((s,x)=>s+x.unit_price*x.quantity,0);const {data:order,error:oe}=await db.from('procurement_orders').insert({user_id:user.id,vendor_id:vendors[0],total,status:'Pending',notes:notes||null}).select().single();if(oe)throw oe;const {error:ie}=await db.from('procurement_items').insert(rows.map(x=>({...x,order_id:order.id})));if(ie)throw ie;return NextResponse.json({order},{status:201})}catch(e){return NextResponse.json({error:e.message==='Unauthorized'?'Unauthorized.':'Unable to create procurement order.'},{status:e.message==='Unauthorized'?401:400})}}
