@@ -1,4 +1,5 @@
 import AuthGate from "../components/AuthGate";
+import VendorCta from "../components/VendorCta";
 
 export const metadata = {
   title: "Food Procurement Intelligence",
@@ -6,5 +7,5 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  return <html lang="en"><body><AuthGate>{children}</AuthGate></body></html>;
+  return <html lang="en"><body><AuthGate>{children}</AuthGate><VendorCta /></body></html>;
 }
