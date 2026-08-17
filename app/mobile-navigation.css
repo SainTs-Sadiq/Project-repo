@@ -1,0 +1,49 @@
+/* Responsive navigation override for the customer workspace and prototype home. */
+@media (max-width: 850px) {
+  .workspace header,
+  .app header {
+    height: auto !important;
+    min-height: 76px;
+    flex-wrap: wrap;
+    gap: 8px !important;
+    padding: 10px 16px !important;
+  }
+
+  .workspace header nav,
+  .app header nav {
+    display: flex !important;
+    order: 3;
+    width: 100%;
+    min-width: 0;
+    margin: 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 5px;
+  }
+
+  .workspace header nav::-webkit-scrollbar,
+  .app header nav::-webkit-scrollbar { display: none; }
+
+  .workspace header nav button,
+  .app header nav button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 9px 11px !important;
+    font-size: 9px !important;
+  }
+
+  .workspace .user,
+  .app .actions {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspace .brand span { display: none; }
+  .workspace .brand b,
+  .app .brand > span { flex: 0 0 auto; }
+
+  .workspace .user button:last-child { padding-left: 6px; padding-right: 2px; }
+}
