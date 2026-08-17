@@ -1,3 +1,4 @@
+import "./mobile-navigation.css";
 import AuthGate from "../components/AuthGate";
 import VendorCta from "../components/VendorCta";
 
