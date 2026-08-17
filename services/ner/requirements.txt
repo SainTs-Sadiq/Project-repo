@@ -1,0 +1,6 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+transformers>=4.50,<5
+torch>=2.6,<3
+sentencepiece>=0.2,<1
+https://github.com/nuhu-ibrahim/ReciFine/archive/refs/tags/V1.zip
