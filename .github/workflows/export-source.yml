@@ -2,6 +2,8 @@ name: Export source archive
 on:
   push:
     branches: [export-source-temp]
+  pull_request:
+    branches: [main]
 jobs:
   archive:
     runs-on: ubuntu-latest
